@@ -5,5 +5,4 @@ pymupdf
 pytest
 pytest-mock
 Pillow
-markdown
 reportlab

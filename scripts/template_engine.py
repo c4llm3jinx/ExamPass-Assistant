@@ -1,10 +1,9 @@
 """Template engine for ExamPass HTML generation.
 
-Provides two reusable generators:
-  render_knowledge(markdown_content, title) -> HTML string
+  render_knowledge_html(body_html, title) -> HTML string
   render_test(questions_data, title) -> HTML string
 
-Call these directly from the skill to skip manual markdown/HTML assembly.
+Call these directly — no Markdown or Pandoc needed.
 """
 
 import os
@@ -52,52 +51,26 @@ def _page_shell(title, body_html, extra_css='', extra_js=''):
 </html>'''
 
 
-# ─── Knowledge page ────────────────────────────────────────────────
+# ─── Knowledge page (HTML-direct, primary) ─────────────────────────
 
-def render_knowledge(markdown_content, title='知识清单'):
+def render_knowledge_html(body_html, title='知识清单'):
+    """Wrap raw HTML body content into a styled knowledge page. No pandoc needed.
+
+    Claude should generate the body as HTML with:
+      <h2> section headings, <h3> sub-sections,
+      <p> paragraphs, <table> data tables,
+      <blockquote> key points, <code> inline code,
+      <ul>/<ol> lists, $$...$$ display math, $...$ inline math.
     """
-    Convert markdown to a styled knowledge page HTML string.
-    Uses pandoc internally for markdown→HTML conversion.
-    """
-    import subprocess
-    import tempfile
-    import uuid
+    return _page_shell(title, body_html)
 
-    md_path = os.path.join(tempfile.gettempdir(), f'_exam_know_{uuid.uuid4().hex[:8]}.md')
-    with open(md_path, 'w', encoding='utf-8') as f:
-        f.write(markdown_content)
 
-    result = subprocess.run([
-        'pandoc', md_path, '-t', 'html5',
-        '--from=markdown+tex_math_dollars+tex_math_single_backslash',
-        '--metadata', 'lang=zh-CN',
-        '--standalone',
-    ], capture_output=True, text=True, timeout=60, encoding='utf-8', errors='replace')
-
-    try:
-        os.remove(md_path)
-    except Exception:
-        pass
-
-    if result.returncode != 0:
-        raise RuntimeError(f"Pandoc failed: {result.stderr[:300]}")
-
-    # Extract body content from pandoc output
-    body = result.stdout
-    for tag in ['<body>', '<BODY>']:
-        if tag in body:
-            body = body.split(tag, 1)[1]
-    for tag in ['</body>', '</BODY>']:
-        if tag in body:
-            body = body.split(tag, 1)[0]
-
-    # Remove pandoc's default style block
-    import re
-    body = re.sub(r'<style>.*?</style>', '', body, flags=re.DOTALL)
-    # Remove nav#TOC (we use manual TOC in markdown)
-    body = re.sub(r'<nav[^>]*id="TOC"[^>]*>.*?</nav>', '', body, flags=re.DOTALL)
-
-    return _page_shell(title, body)
+def save_knowledge_html(body_html, output_path, title='知识清单'):
+    """Convenience: render and write knowledge HTML to file."""
+    html = render_knowledge_html(body_html, title)
+    os.makedirs(os.path.dirname(output_path) if os.path.dirname(output_path) else '.', exist_ok=True)
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write(html)
 
 
 # ─── Interactive test page ─────────────────────────────────────────

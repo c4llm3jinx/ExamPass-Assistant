@@ -47,12 +47,19 @@ pip install -r requirements.txt
 **Use in your own code**:
 
 ```python
-from scripts.template_engine import save_knowledge, save_test
+from scripts.template_engine import save_knowledge_html, save_test
 
-# Knowledge guide from markdown
-save_knowledge(markdown_string, 'output.html', 'Chapter Title')
+# Knowledge guide — pass HTML body directly, no Markdown/Pandoc needed
+body_html = '''
+<h2>1. Sequence Modeling Basics</h2>
+<h3>1.1 Sequence Data</h3>
+<p>Sequence data is characterized by <strong>ordered elements</strong>...</p>
+<table><tr><th>N</th><th>Name</th></tr>...</table>
+<blockquote>Key point: Beam search is a heuristic method</blockquote>
+'''
+save_knowledge_html(body_html, 'output.html', 'Chapter 15')
 
-# Interactive quiz from structured data
+# Interactive quiz — pass question data, get a clickable self-grading page
 questions = [
     {"type": "choice", "points": 2,
      "question": "What is the core function of a language model?",
@@ -70,7 +77,7 @@ save_test(questions, 'quiz.html', 'Chapter Quiz', '100 points total')
 1. **Scan & Group** — recursively finds all PPTX/DOCX/PDF files, groups by parent folder (one chapter per folder)
 2. **Extract** — pulls text, tables, and embedded images from each file
 3. **Analyze** — Claude reads the content, identifies key concepts, formulas, solution methods, and exam-relevant patterns
-4. **Generate** — produces styled HTML with MathJax formulas and interactive quiz logic
+4. **Generate** — Claude outputs HTML body directly (no Markdown/Pandoc needed); templates wrap it into a styled page with MathJax and interactive quiz logic
 
 ### Project Structure
 

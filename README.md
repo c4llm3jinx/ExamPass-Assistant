@@ -16,7 +16,7 @@
 
 - 支持 PPTX / DOCX / PDF 三种格式，递归扫描目录，按章节自动分组
 - 提取文字、表格、图片（Claude 多模态分析），保证内容无遗漏
-- 生成**知识清单 HTML**：公式完美（MathJax 渲染）、层次分明、重点标注、目录导航
+- 生成**知识清单 HTML**：Claude 直接输出 HTML body，无需 Markdown/Pandoc，公式完美（MathJax 渲染）、层次分明、重点标注
 - 生成**交互式章节测试 HTML**：选项竖排、点击批改、逐题解析+易错提醒、自动计分
 - 浏览器打开即可使用，Ctrl+P 打印为 PDF
 
@@ -64,12 +64,19 @@ Linux: `sudo apt install pandoc`
 #### 3. 在代码中调用模板引擎
 
 ```python
-from scripts.template_engine import save_knowledge, save_test
+from scripts.template_engine import save_knowledge_html, save_test
 
-# 知识清单
-save_knowledge(markdown_string, 'output.html', '章节标题')
+# 知识清单 — 直接传入 HTML body，无需 Markdown/Pandoc
+body_html = '''
+<h2>一、序列建模基础</h2>
+<h3>1.1 序列数据</h3>
+<p>序列数据是以<strong>有序形式</strong>存在的数据...</p>
+<table><tr><th>N值</th><th>名称</th></tr>...</table>
+<blockquote>重点：束搜索是启发式方法</blockquote>
+'''
+save_knowledge_html(body_html, 'output.html', '第15章 序列生成模型')
 
-# 交互式测试
+# 交互式测试 — 传入题目数据，自动生成可选可批改页面
 questions = [
     {"type": "choice", "points": 2,
      "question": "语言模型的核心功能是什么？",
@@ -95,8 +102,7 @@ EPA/
 │   ├── extract_docx.py         # DOCX 提取
 │   ├── extract_pdf.py          # PDF 提取
 │   ├── image_extractor.py      # 图片提取
-│   ├── markdown_to_pdf.py      # Markdown → HTML
-│   ├── template_engine.py      # 模板引擎（知识清单+交互测试）
+│   ├── template_engine.py      # HTML 模板引擎（直接生成，无需 Pandoc）
 │   ├── knowledge_analyzer.py   # 知识清单分析
 │   ├── test_generator.py       # 测试题生成
 │   ├── exam_generator.py       # 期末试卷生成
