@@ -9,7 +9,7 @@ from scanner import scan_and_group, get_group_name
 from extractor import extract_file, merge_group_content
 from knowledge_analyzer import build_knowledge_prompt, build_knowledge_markdown
 from test_generator import build_test_prompt, split_test_and_answer
-from markdown_to_pdf import markdown_to_pdf
+from html_generator import generate_html
 
 
 class TestFullPipelineSingleFile:
@@ -56,7 +56,7 @@ class TestFullPipelineSingleFile:
 
         # Generate PDF
         output = os.path.join(temp_dir, f"{group_name}-知识清单.html")
-        success = markdown_to_pdf(md, output)
+        success = generate_html(md, output)
         assert success
         assert os.path.exists(output)
         assert os.path.getsize(output) > 0
@@ -116,7 +116,7 @@ class TestFullPipelineMultipleFiles:
 
         # Generate PDF
         output = os.path.join(ch_dir, f"{group_name}-知识清单.html")
-        success = markdown_to_pdf(md, output)
+        success = generate_html(md, output)
         assert success
         assert os.path.exists(output)
 
@@ -142,7 +142,7 @@ class TestMultiChapterBatch:
             group_name = get_group_name(folder, temp_dir)
             md = build_knowledge_markdown("## Content\n知识要点", group_name)
             output = os.path.join(folder, f"{group_name}-知识清单.html")
-            success = markdown_to_pdf(md, output)
+            success = generate_html(md, output)
             assert success
             assert os.path.exists(output)
 
@@ -200,12 +200,12 @@ class TestTestGenerationPipeline:
         # Generate question PDF
         q_md = """---\ntitle: "第一章 - 章节测试"\nlang: zh-CN\n---\n\n""" + q
         q_pdf = os.path.join(temp_dir, "第一章-章节测试.html")
-        assert markdown_to_pdf(q_md, q_pdf)
+        assert generate_html(q_md, q_pdf)
 
         # Generate answer PDF
         a_md = """---\ntitle: "第一章 - 章节测试答案"\nlang: zh-CN\n---\n\n""" + a
         a_pdf = os.path.join(temp_dir, "第一章-章节测试-答案.html")
-        assert markdown_to_pdf(a_md, a_pdf)
+        assert generate_html(a_md, a_pdf)
 
 
 class TestExamGenerationPipeline:
@@ -266,7 +266,7 @@ class TestExamGenerationPipeline:
         assert "机器学习" in ans_md
 
         exam_pdf = os.path.join(temp_dir, "期末考试-机器学习.html")
-        assert markdown_to_pdf(exam_md, exam_pdf)
+        assert generate_html(exam_md, exam_pdf)
 
         ans_pdf = os.path.join(temp_dir, "期末考试-机器学习-答案.html")
-        assert markdown_to_pdf(ans_md, ans_pdf)
+        assert generate_html(ans_md, ans_pdf)

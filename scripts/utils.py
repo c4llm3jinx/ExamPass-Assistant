@@ -26,10 +26,6 @@ def cleanup_temp(tmpdir: str) -> None:
         shutil.rmtree(tmpdir, ignore_errors=True)
 
 
-def find_pandoc() -> Optional[str]:
-    return shutil.which("pandoc")
-
-
 def ensure_dir(path: str) -> None:
     os.makedirs(path, exist_ok=True)
 

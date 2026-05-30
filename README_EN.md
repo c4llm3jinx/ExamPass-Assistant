@@ -28,15 +28,10 @@ PPTX · DOCX · PDF (with image recognition via multimodal analysis)
 ### Quick Start
 
 ```bash
-git clone https://github.com/yourname/exampass.git
-cd exampass
+git clone https://github.com/WUBING2023/ExamPass-Assistant.git
+cd ExamPass-Assistant
 pip install -r requirements.txt
 ```
-
-**Requires [Pandoc](https://pandoc.org)**:
-- Windows: `winget install pandoc`
-- Mac: `brew install pandoc`
-- Linux: `sudo apt install pandoc`
 
 ### Usage
 

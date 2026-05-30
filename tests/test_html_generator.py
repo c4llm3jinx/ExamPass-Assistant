@@ -1,8 +1,8 @@
-"""Tests for markdown_to_pdf.py (now outputs .html)."""
+"""Tests for html_generator.py (now outputs .html)."""
 
 import os
 import pytest
-from markdown_to_pdf import markdown_to_pdf, markdown_to_html
+from html_generator import generate_html
 
 
 SAMPLE_MARKDOWN = """---
@@ -38,7 +38,7 @@ $$\\sum_{i=1}^{n} x_i = \\bar{x}$$
 class TestMarkdownToPDF:
     def test_basic_conversion(self, temp_dir):
         output = os.path.join(temp_dir, "test_output.html")
-        result = markdown_to_pdf(SAMPLE_MARKDOWN, output)
+        result = generate_html(SAMPLE_MARKDOWN, output)
         assert result is True
         assert os.path.exists(output)
         assert os.path.getsize(output) > 0
@@ -58,7 +58,7 @@ lang: zh-CN
 监督学习使用带标签的数据进行训练。
 """
         output = os.path.join(temp_dir, "chinese_test.html")
-        result = markdown_to_pdf(md, output)
+        result = generate_html(md, output)
         assert result is True
         assert os.path.exists(output)
         assert os.path.getsize(output) > 0
@@ -77,7 +77,7 @@ $$\\frac{\\partial L}{\\partial w} = \\frac{1}{n}\\sum_{i=1}^{n} 2(y_i - \\hat{y
 $$\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}$$
 """
         output = os.path.join(temp_dir, "math_test.html")
-        result = markdown_to_pdf(md, output)
+        result = generate_html(md, output)
         assert result is True
 
     def test_table_rendering(self, temp_dir):
@@ -91,22 +91,22 @@ $$\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}$$
 | Neural Network | 95.5% | 600s |
 """
         output = os.path.join(temp_dir, "table_test.html")
-        result = markdown_to_pdf(md, output)
+        result = generate_html(md, output)
         assert result is True
 
     def test_empty_content(self, temp_dir):
         output = os.path.join(temp_dir, "empty.html")
-        result = markdown_to_pdf("# Empty\n", output)
+        result = generate_html("# Empty\n", output)
         assert result is True
 
     def test_invalid_output_path(self, temp_dir):
         output = os.path.join(temp_dir, "nonexistent", "out.html")
-        result = markdown_to_pdf("# test", output)
-        # Should handle gracefully — pandoc will fail on nonexistent dir
+        result = generate_html("# test", output)
+        # Should handle gracefully — handle gracefully on invalid paths
         assert isinstance(result, bool)
 
     def test_output_overwrites(self, temp_dir):
         output = os.path.join(temp_dir, "overwrite.html")
-        markdown_to_pdf("# First\n", output)
-        markdown_to_pdf("# Second\n", output)
+        generate_html("# First\n", output)
+        generate_html("# Second\n", output)
         assert os.path.exists(output)

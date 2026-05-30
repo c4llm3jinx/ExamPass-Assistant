@@ -23,16 +23,10 @@
 ### 安装
 
 ```bash
-git clone https://github.com/yourname/exampass.git
-cd exampass
+git clone https://github.com/WUBING2023/ExamPass-Assistant.git
+cd ExamPass-Assistant
 pip install -r requirements.txt
 ```
-
-**必需依赖**：[Pandoc](https://pandoc.org)（Markdown 转 HTML）
-
-Windows: `winget install pandoc`
-Mac: `brew install pandoc`
-Linux: `sudo apt install pandoc`
 
 ### 使用方法
 
