@@ -18,7 +18,14 @@ def _read(filename):
 
 
 # MathJax 3 config: enable $...$ and $$...$$ delimiters
-_MATHJAX_CONFIG = '<script>MathJax={tex:{inlineMath:[["$","$"],["\\\\(","\\\\)"]],displayMath:[["$$","$$"],["\\\\[","\\\\]"]]}};</script>'
+_MATHJAX_CONFIG = """<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']]
+  }
+};
+</script>"""
 _MATHJAX_SCRIPT = '<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js"></script>'
 
 

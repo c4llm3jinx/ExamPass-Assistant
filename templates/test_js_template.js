@@ -1,7 +1,10 @@
 var Q = __QUESTIONS_PLACEHOLDER__;
 var LABELS = __LABELS_PLACEHOLDER__;
 
+console.log('ExamPass: loaded', Q.length, 'questions');
+
 (function build(){
+  console.log('ExamPass: build() starting...');
   var h = '';
   var sec = '';
   var titles = LABELS.section;
@@ -46,6 +49,7 @@ var LABELS = __LABELS_PLACEHOLDER__;
   }
 
   document.getElementById('questions-container').innerHTML = h;
+  console.log('ExamPass: build() done, HTML length:', h.length);
 })();
 
 function sel(qid, idx) {
