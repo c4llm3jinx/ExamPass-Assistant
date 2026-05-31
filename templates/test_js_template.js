@@ -48,10 +48,16 @@ function build(){
   }
 
   container.innerHTML = h;
+
+  // Re-render MathJax for dynamically inserted formulas
+  if (window.MathJax && MathJax.typesetPromise) {
+    MathJax.typesetPromise([container]).catch(function(err) {
+      console.error('MathJax typeset error:', err);
+    });
+  }
 }
 
 document.addEventListener('DOMContentLoaded', build);
-// Fallback: if DOM already loaded, run immediately
 if (document.readyState === 'interactive' || document.readyState === 'complete') {
   build();
 }
@@ -133,5 +139,12 @@ function gradeAll() {
   if (btn) {
     btn.disabled = true;
     btn.textContent = LABELS.graded_label;
+  }
+
+  // Re-render MathJax for revealed explanations
+  if (window.MathJax && MathJax.typesetPromise) {
+    MathJax.typesetPromise().catch(function(err) {
+      console.error('MathJax typeset error:', err);
+    });
   }
 }
