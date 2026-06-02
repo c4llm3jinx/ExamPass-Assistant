@@ -3,6 +3,141 @@ name: exampass
 description: 将课程资料（PPT/Word/PDF）按章节生成知识清单和交互式章节测试，帮助高效期末复习。
 ---
 
+## 命令路由
+
+检查调用参数 `args`：
+- **`args` 为 `"update"`**：执行下方「技能更新」流程，完成后直接结束，不执行知识清单生成。
+- **其他情况**（`args` 为空或为目录路径）：继续下方的「执行流程」。
+
+---
+
+## 技能更新
+
+当用户执行 `/exampass update` 时，按以下脚本将 ExamPass Assistant 更新到最新版本。全程使用绝对路径，不受当前工作目录影响。
+
+```powershell
+$SkillDir = "$env:USERPROFILE\.claude\skills\exampass"
+
+# 1. 定位并验证技能仓库
+if (-not (Test-Path "$SkillDir")) {
+    Write-Host "错误：找不到技能目录 $SkillDir"
+    Write-Host "请重新安装：git clone https://github.com/WUBING2023/ExamPass-Assistant.git $SkillDir"
+    exit 1
+}
+if (-not (Test-Path "$SkillDir\.git")) {
+    Write-Host "错误：$SkillDir 不是 git 仓库"
+    exit 1
+}
+Push-Location $SkillDir
+Write-Host "技能目录：$SkillDir"
+Write-Host ""
+
+# 2. 获取远程更新信息
+Write-Host "正在获取远程更新..."
+git fetch origin master 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "错误：无法连接 GitHub，请检查网络。"
+    Pop-Location
+    exit 1
+}
+
+$Behind = [int](git rev-list --count HEAD..origin/master 2>&1)
+Write-Host "当前落后 origin/master：$Behind 个提交"
+
+if ($Behind -eq 0) {
+    Write-Host "已是最新版本！"
+    Write-Host ""
+    Write-Host "验证 Python 依赖..."
+    pip install -r requirements.txt 2>&1
+    Write-Host ""
+    Write-Host "当前版本："
+    git log --oneline -3
+    Pop-Location
+    exit 0
+}
+
+Write-Host ""
+Write-Host "待拉取的提交："
+git log --oneline HEAD..origin/master
+Write-Host ""
+
+# 3. 处理本地修改
+$Status = git status --porcelain 2>&1
+if ($Status) {
+    Write-Host "工作树有本地修改，先 stash 保存..."
+    $Stamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    git stash push --include-untracked -m "exampass-update-$Stamp" 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "错误：git stash 失败"
+        Pop-Location
+        exit 1
+    }
+    $Stashed = $true
+    Write-Host "修改已暂存为：exampass-update-$Stamp"
+} else {
+    $Stashed = $false
+    Write-Host "工作树干净。"
+}
+Write-Host ""
+
+# 4. 拉取最新代码
+Write-Host "正在拉取最新代码..."
+git pull origin master 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "错误：git pull 失败"
+    if ($Stashed) {
+        Write-Host "尝试恢复你的本地修改..."
+        git stash pop 2>&1
+    }
+    Pop-Location
+    exit 1
+}
+Write-Host "拉取完成。"
+Write-Host ""
+
+# 5. 恢复本地修改
+if ($Stashed) {
+    Write-Host "正在恢复本地修改..."
+    git stash pop 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host ""
+        Write-Host "==========================================="
+        Write-Host "警告：本地修改无法自动合并，有冲突！"
+        Write-Host "你的修改安全保存在 stash 中。手动恢复："
+        Write-Host "  cd $SkillDir"
+        Write-Host "  git stash list"
+        Write-Host "  git stash pop  （手动解决冲突后 commit）"
+        Write-Host "==========================================="
+        Write-Host ""
+    } else {
+        Write-Host "本地修改已自动恢复。"
+    }
+}
+Write-Host ""
+
+# 6. 安装/更新依赖
+Write-Host "安装 Python 依赖..."
+pip install -r requirements.txt 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "警告：pip install 有错误，部分功能可能不可用。"
+    Write-Host "手动重试：pip install -r $SkillDir\requirements.txt"
+}
+Write-Host ""
+
+# 7. 更新摘要
+Write-Host "==========================================="
+Write-Host "  ExamPass 更新完成！"
+Write-Host "==========================================="
+Write-Host ""
+Write-Host "最新提交："
+git log --oneline -5
+Write-Host ""
+Write-Host "技能目录：$SkillDir"
+Pop-Location
+```
+
+---
+
 # ExamPass Assistant
 
 ## 执行流程
