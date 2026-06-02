@@ -1,29 +1,31 @@
-# ExamPass Assistant
+# ExamPass Assistant <sup>v0.1</sup>
 
-**把课堂讲义变成考试利器。** 一键将 PPT、Word、PDF 课件转化为结构化知识清单和交互式测试题。
+**Turn lecture slides into exam-ready study materials.**
 
-> [English](./README_EN.md)
+> [中文](./README_CN.md)
 
 ---
 
-### 适用场景
+### What is this
 
-| 角色 | 用途 |
-|------|------|
-| 大学生 | 上传课程 PPT/讲义，自动生成知识清单 + 交互式章节测试（选择+一键批改+逐题解析），高效通过期末考试 |
-| 授课教师 | 课件一键转化为结构化知识总结，自动生成配套习题+答案解析，直接用于课堂教学或课后作业 |
-| 考研/考证 | 参考书 PDF 转为精简知识清单，配合自测题检验掌握程度 |
+An AI-powered exam prep assistant. Drop in lecture PPTs, Word handouts, or PDF readings — it generates:
 
-### 核心功能
+- **Knowledge Guides** — structured review notes with MathJax formulas, dual-color highlighting (key points in bold black, explanations in lighter gray), priority tags (must-know / key / frequent / info), and auto-generated table of contents
+- **Interactive Quizzes** — click to answer, one-click grading, per-question correct/incorrect badges, detailed explanations, and common mistake warnings
 
-- 支持 PPTX / DOCX / PDF，递归扫描目录，按章节自动分组
-- 提取文字、表格、图片（Claude 多模态分析）
-- 生成**知识清单 HTML**：MathJax 公式完美渲染，双色标注（知识点黑色加粗 + 解释浅灰细体），重点分级标签（必考/重点/高频/了解），自动目录导航
-- 生成**交互式章节测试 HTML**：28 题 100 分，点击选项→一键批改→逐题显示正确/错误+详细解析+易错提醒
-- 分析结果自动缓存，同目录再次运行秒级出结果
-- 浏览器打开即用，Ctrl+P 打印为 PDF
+Open in any browser. Ctrl+P to print as PDF. MathJax renders formulas perfectly.
 
-### 快速开始
+### Why
+
+The universal pain of finals week: scattered lecture files, no clear sense of exam priorities, no reliable practice questions.
+
+ExamPass reads your course materials with Claude, extracts key concepts with logical narratives, and generates self-grading quizzes. Students use it to study smarter. Instructors use it to create exercises and assignments in seconds.
+
+### Supported Formats
+
+PPTX · DOCX · PDF (with image recognition via multimodal analysis)
+
+### Quick Start
 
 ```bash
 git clone https://github.com/WUBING2023/ExamPass-Assistant.git
@@ -31,91 +33,92 @@ cd ExamPass-Assistant
 pip install -r requirements.txt
 ```
 
-### 使用方法
+### Usage
 
-#### 生成章节知识清单 + 测试题
+**Generate chapter materials** — run `/exampass` in any course directory. The skill scans subfolders, groups files by chapter, extracts all content, performs deep analysis, and outputs knowledge guides + interactive quizzes into each folder.
 
-在课程目录下调用 `/exampass`，自动扫描子文件夹、提取内容、深度分析、生成 HTML。
+**Keep up to date** — run `/exampass update` to pull the latest features and fixes from GitHub.
 
-```
-课程/
-├── 第一章-绪论/
-│   ├── 课件.pptx
-│   └── 讲义.pdf
-├── 第二章-基础/
-│   └── lecture.pdf
-```
-
-每个章节生成：
-- `知识清单.html` — 结构化复习资料（逻辑链完整、双色扫读、公式完美）
-- `章节测试.html` — 交互式自测（可选可批改、逐题解析）
-
-#### 在代码中调用
+**Use in your own code**:
 
 ```python
 from scripts.template_engine import save_knowledge_html, save_test
 
-# 知识清单：HTML body 直接传入（引擎自动加 H1 + 目录）
-body = '<h2>一、序列建模基础</h2>\n<h3>1.1 什么是序列数据</h3>\n<p>...</p>'
-save_knowledge_html(body, '知识清单.html', '第15章 序列生成模型')
+# Knowledge guide — pass HTML body directly (engine adds H1 + TOC)
+body = '<h2>1. Sequence Modeling Basics</h2>\n<h3>1.1 What is Sequence Data</h3>\n<p>...</p>'
+save_knowledge_html(body, 'knowledge.html', 'Chapter 15')
 
-# 交互式测试：题目列表直接传入
+# Interactive quiz — pass question data, get a self-grading page
 questions = [
     {"type": "choice", "points": 2,
-     "question": "语言模型的核心功能是什么？",
-     "options": ["翻译", "评估句子概率", "分词", "识别物体"],
-     "answer": 1, "explanation": "语言模型计算词序列概率...",
-     "pitfall": "注意区分语言模型和机器翻译"},
+     "question": "What is the core function of a language model?",
+     "options": ["Translation", "Estimating sentence probability",
+                 "Tokenization", "Object recognition"],
+     "answer": 1,
+     "explanation": "A language model computes P(w1,...,wT)...",
+     "pitfall": "Don't confuse language models with translation systems."},
 ]
-save_test(questions, '章节测试.html', '第15章', '满分 100 分', duration_minutes=30)
+save_test(questions, 'quiz.html', 'Chapter 15', '100 points', duration_minutes=30)
 ```
 
-### 项目结构
+### Skills
+
+| Command | Description |
+|---------|-------------|
+| `/exampass` | Generate knowledge guides and interactive chapter quizzes |
+| `/exampass update` | Pull latest features, fixes, and dependencies |
+| `/exampass-final` | Generate a full mock final exam with answer key |
+
+### How It Works
+
+1. **Scan & Group** — recursively finds all PPTX/DOCX/PDF files, groups by parent folder
+2. **Extract** — pulls text, tables, and embedded images from each file
+3. **Analyze** — Claude deeply reads the content, identifies concepts, motivations, and logical connections
+4. **Generate** — produces styled HTML with dual-color highlighting, MathJax formulas, and interactive quiz logic
+
+### Project Structure
 
 ```
 EPA/
-├── SKILL.md                    # /exampass 入口
-├── exampass-final.md           # /exampass-final 入口
-├── scripts/
-│   ├── scanner.py              # 递归扫描与分组
-│   ├── extractor.py            # 统一提取调度（PPTX/DOCX/PDF）
-│   ├── extract_pptx.py         # PPTX 提取（文字+表格+图片）
-│   ├── extract_docx.py         # DOCX 提取
-│   ├── extract_pdf.py          # PDF 提取
-│   ├── image_extractor.py      # 图片提取（供 Claude 多模态分析）
-│   ├── template_engine.py      # HTML 模板引擎
-│   ├── html_generator.py       # 快速生成器
-│   ├── generate_cached.py      # 缓存加速（二次运行秒出）
-│   ├── run_exampass.py         # 单脚本提取入口
-│   ├── knowledge_analyzer.py   # 知识清单分析 prompt
-│   ├── test_generator.py       # 测试题生成 prompt
-│   ├── exam_generator.py       # 期末试卷 prompt
-│   ├── web_research.py         # 网络调研
-│   └── utils.py                # 通用工具
-├── templates/
-│   ├── base.css                # 共享样式（暖色纸张、双色标注）
-│   ├── test.css                # 交互测试样式
-│   ├── page_template.html      # HTML 页面模板
-│   ├── test_js_template.js     # 测试页 JS 模板
-│   └── test_labels.json        # 中文标签配置
-├── tests/                      # 102 个测试用例
+├── SKILL.md                    # /exampass entry point
+├── exampass-update.md           # /exampass-update entry point
+├── exampass-final.md           # /exampass-final entry point
+├── scripts/                    # Core Python modules
+│   ├── run_exampass.py         # Single-script extraction entry
+│   ├── scanner.py              # Recursive scanning & grouping
+│   ├── extractor.py            # Unified extraction dispatcher
+│   ├── extract_pptx.py         # PPTX extraction
+│   ├── extract_docx.py         # DOCX extraction
+│   ├── extract_pdf.py          # PDF extraction
+│   ├── image_extractor.py      # Image extraction for multimodal analysis
+│   ├── ocr_backend.py          # OCR fallback for non-multimodal models
+│   ├── template_engine.py      # HTML template engine
+│   ├── html_generator.py       # Fast generator
+│   ├── generate_cached.py      # Cache-based instant re-runs
+│   ├── knowledge_analyzer.py   # Knowledge list prompt builder
+│   ├── test_generator.py       # Quiz generation prompt builder
+│   ├── exam_generator.py       # Final exam prompt builder
+│   ├── web_research.py         # Web research
+│   └── utils.py                # Shared utilities
+├── templates/                  # CSS & HTML templates
+│   ├── base.css                # Shared styles (warm paper, dual-color)
+│   ├── test.css                # Interactive quiz styles
+│   ├── page_template.html      # HTML page shell
+│   ├── test_js_template.js     # Quiz JS template
+│   └── test_labels.json        # Chinese UI labels
+├── tests/                      # 102 test cases
 └── requirements.txt
 ```
 
-### 贡献者
+### Contributors
 
-- 开发与维护：[@WUBING2023](https://github.com/WUBING2023)
-- 启发性贡献：yaxing@cvc.uab.es
-- 测试：[@YeMoonlight](https://github.com/YeMoonlight)
-- 测试：[@Yuzhihan-zyr](https://github.com/Yuzhihan-zyr)
+- Development & Maintenance: [@WUBING2023](https://github.com/WUBING2023)
+- Inspirational Contribution: yaxing@cvc.uab.es
+- Testing: [@YeMoonlight](https://github.com/YeMoonlight)
+- Testing: [@Yuzhihan-zyr](https://github.com/Yuzhihan-zyr)
 
-### 许可证
+### License
 
-本软件采用 **Creative Commons BY-NC 4.0** 许可证。
-
-- 允许自由使用、修改、再分发（需署名）
-- **禁止商业用途**
-
-完整条款见 [LICENSE](./LICENSE)。
+[CC BY-NC 4.0](./LICENSE) — free to use, modify, and share for non-commercial purposes. Commercial use requires a separate license.
 
 Copyright (c) 2025 ExamPass Assistant Contributors
