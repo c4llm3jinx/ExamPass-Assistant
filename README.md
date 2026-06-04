@@ -4,6 +4,10 @@
 
 > [中文](./README_CN.md)
 
+> 📌 **Finals-season note · 期末季说明**
+> One update is planned for **mid-June**. I'm using EPA for my own finals right now and will share real usage notes along the way — but I won't have time to answer questions for a while, so issues / DMs may be delayed. Thanks for understanding 🙏
+> 6 月中旬会有一次更新。作者正用 EPA 备考自己的期末，会同步分享实测体验；但近期没精力一一答疑，Issue / 私信会延迟回复，感谢理解 🙏
+
 ---
 
 ### What is this
