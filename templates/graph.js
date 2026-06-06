@@ -107,17 +107,38 @@ var treeData = null;
 var activeEditNode = null;
 var settings = loadSettings();
 
+// DOM element references — checked after DOMContentLoaded
+var graphCanvas, zoomSlider, zoomLabel, headerTitle, connectionsLayer, tooltip, toast;
+function cacheDomRefs() {
+  graphCanvas = document.getElementById('graph-canvas');
+  zoomSlider = document.getElementById('zoom-slider');
+  zoomLabel = document.getElementById('zoom-label');
+  headerTitle = document.getElementById('header-title');
+  connectionsLayer = document.getElementById('connections-layer');
+  tooltip = document.getElementById('tooltip');
+  toast = document.getElementById('toast');
+}
+
 function render(tree) {
   treeData = tree;
   if (!treeData.nodes || treeData.nodes.length === 0) {
-    document.getElementById('graph-canvas').innerHTML =
+    graphCanvas.innerHTML =
       '<div style="padding:60px;text-align:center;color:#999;">课程内容为空，无法生成知识图谱</div>';
     return;
   }
 
   assignBranchColors(treeData.nodes);
 
-  var canvas = document.getElementById('graph-canvas');
+  // Clean up active edit panel before re-render
+  if (activeEditNode) {
+    var oldPanel = document.querySelector('.ge[data-for-node="' + activeEditNode.id + '"]');
+    if (oldPanel && oldPanel._scrollHandler) {
+      window.removeEventListener('scroll', oldPanel._scrollHandler);
+    }
+    activeEditNode = null;
+  }
+
+  var canvas = graphCanvas;
   canvas.innerHTML = '';
 
   var levels = flattenByLevel(treeData.nodes);
@@ -153,14 +174,14 @@ function render(tree) {
   // Restore zoom
   var zoom = settings.zoom || 1;
   canvas.style.transform = 'scale(' + zoom + ')';
-  document.getElementById('zoom-slider').value = Math.round(zoom * 100);
-  document.getElementById('zoom-label').textContent = Math.round(zoom * 100) + '%';
+  zoomSlider.value = Math.round(zoom * 100);
+  zoomLabel.textContent = Math.round(zoom * 100) + '%';
 
   // Restore renames
   applyRenames();
 
   // Update header
-  document.getElementById('header-title').textContent =
+  headerTitle.textContent =
     (treeData.title || '课程') + ' - 知识图谱';
 }
 
@@ -258,7 +279,7 @@ function renderEditPanel(node) {
   var imagesDiv = document.createElement('div');
   imagesDiv.className = 'ge-images';
   for (var i = 0; i < images.length; i++) {
-    imagesDiv.appendChild(createImageElement(images[i], i, node));
+    imagesDiv.appendChild(createImageElement(images[i], node));
   }
   el.appendChild(imagesDiv);
 
@@ -271,7 +292,7 @@ function renderEditPanel(node) {
   return el;
 }
 
-function createImageElement(src, index, node) {
+function createImageElement(src, node) {
   var wrap = document.createElement('div');
   wrap.className = 'ge-img-wrap';
 
@@ -286,8 +307,11 @@ function createImageElement(src, index, node) {
   del.addEventListener('click', function(e) {
     e.stopPropagation();
     var images = loadImages(node.id);
-    images.splice(index, 1);
-    saveImages(node.id, images);
+    var idx = images.indexOf(src);
+    if (idx !== -1) {
+      images.splice(idx, 1);
+      saveImages(node.id, images);
+    }
     wrap.remove();
   });
   wrap.appendChild(del);
@@ -308,9 +332,11 @@ function handlePaste(e, node) {
         images.push(dataUrl);
         saveImages(node.id, images);
         // Add to DOM
-        var imagesDiv = e.target.parentElement.querySelector('.ge-images');
+        var panel = e.target.closest('.ge');
+        if (!panel) return;
+        var imagesDiv = panel.querySelector('.ge-images');
         if (imagesDiv) {
-          imagesDiv.appendChild(createImageElement(dataUrl, images.length - 1, node));
+          imagesDiv.appendChild(createImageElement(dataUrl, node));
         }
       });
       return;
@@ -331,6 +357,10 @@ function compressImage(blob, callback) {
     var ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0, w, h);
     callback(canvas.toDataURL('image/jpeg', 0.7));
+  };
+  img.onerror = function() {
+    URL.revokeObjectURL(url);
+    showToast('图片加载失败，请重试');
   };
   img.src = url;
 }
@@ -441,7 +471,9 @@ function finishRename(node, newLabel) {
   renamed[node.id] = newLabel;
   settings.renamed = renamed;
   saveSettings(settings);
-  render(treeData);
+  // Update DOM directly instead of full re-render
+  var el = document.querySelector('.gn[data-id="' + node.id + '"] .gn-label');
+  if (el) el.textContent = newLabel;
 }
 
 function applyRenames() {
@@ -456,13 +488,11 @@ function applyRenames() {
 // ─── Connections (SVG) ────────────────────────────────────
 
 function drawConnections() {
-  var svg = document.getElementById('connections-layer');
-  var canvas = document.getElementById('graph-canvas');
-  var canvasRect = canvas.getBoundingClientRect();
+  var canvasRect = graphCanvas.getBoundingClientRect();
 
-  svg.style.width = canvas.scrollWidth + 'px';
-  svg.style.height = canvas.scrollHeight + 'px';
-  svg.setAttribute('viewBox', '0 0 ' + canvas.scrollWidth + ' ' + canvas.scrollHeight);
+  connectionsLayer.style.width = graphCanvas.scrollWidth + 'px';
+  connectionsLayer.style.height = graphCanvas.scrollHeight + 'px';
+  connectionsLayer.setAttribute('viewBox', '0 0 ' + graphCanvas.scrollWidth + ' ' + graphCanvas.scrollHeight);
 
   var paths = [];
 
@@ -509,37 +539,34 @@ function drawConnections() {
       '" d="M' + x1 + ',' + y1 + ' C' + cx1 + ',' + cy1 + ' ' + cx2 + ',' + cy2 + ' ' + x2 + ',' + y2 + '" />';
   }
 
-  svg.innerHTML = html;
+  connectionsLayer.innerHTML = html;
 }
 
 // ─── Tooltip ───────────────────────────────────────────────
 
 function showTooltip(e, text) {
-  var tip = document.getElementById('tooltip');
-  tip.textContent = text;
-  tip.classList.add('tooltip-show');
+  tooltip.textContent = text;
+  tooltip.classList.add('tooltip-show');
   moveTooltip(e);
 }
 
 function moveTooltip(e) {
-  var tip = document.getElementById('tooltip');
   var x = e.clientX + 14;
   var y = e.clientY + 14;
   if (x + 300 > window.innerWidth) x = e.clientX - 310;
   if (y + 80 > window.innerHeight) y = e.clientY - 90;
-  tip.style.left = x + 'px';
-  tip.style.top = y + 'px';
+  tooltip.style.left = x + 'px';
+  tooltip.style.top = y + 'px';
 }
 
 function hideTooltip() {
-  document.getElementById('tooltip').classList.remove('tooltip-show');
+  tooltip.classList.remove('tooltip-show');
 }
 
 // ─── Toast ─────────────────────────────────────────────────
 
 var toastTimer = null;
 function showToast(msg) {
-  var toast = document.getElementById('toast');
   toast.textContent = msg;
   toast.classList.add('toast-show');
   if (toastTimer) clearTimeout(toastTimer);
