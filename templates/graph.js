@@ -376,6 +376,12 @@ function toggleEditPanel(node, nodeEl) {
   activeEditNode = node;
 
   var panel = renderEditPanel(node);
+  // Insert after node within its column (but column will expand to fit)
+  var col = nodeEl.closest('.gl');
+  if (col) {
+    col.style.maxWidth = 'none';
+    col.style.minWidth = '480px';
+  }
   nodeEl.parentElement.insertBefore(panel, nodeEl.nextSibling);
   setTimeout(function() { panel.querySelector('.ge-notes').focus(); }, 50);
 
@@ -401,6 +407,12 @@ function closeEditPanel(node) {
       window.removeEventListener('scroll', panel._scrollHandler);
     }
     panel.remove();
+  }
+  // Restore column width
+  var col = panel.closest('.gl');
+  if (col) {
+    col.style.maxWidth = '';
+    col.style.minWidth = '';
   }
   if (activeEditNode && activeEditNode.id === node.id) {
     activeEditNode = null;
@@ -536,7 +548,8 @@ function drawConnections() {
     var cy2 = y2;
 
     html += '<path class="conn-path" data-branch="' + p.branch +
-      '" d="M' + x1 + ',' + y1 + ' C' + cx1 + ',' + cy1 + ' ' + cx2 + ',' + cy2 + ' ' + x2 + ',' + y2 + '" />';
+      '" stroke="' + BRANCH_COLORS[p.branch] + '"' +
+      ' d="M' + x1 + ',' + y1 + ' C' + cx1 + ',' + cy1 + ' ' + cx2 + ',' + cy2 + ' ' + x2 + ',' + y2 + '" />';
   }
 
   connectionsLayer.innerHTML = html;

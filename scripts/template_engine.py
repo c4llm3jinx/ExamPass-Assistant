@@ -104,9 +104,7 @@ def save_graph_html(tree_json: dict, output_path: str, title: str):
 
     tree_json: {"title": "...", "nodes": [...]}
     """
-    import json as _json
-
-    tree_data_js = 'const TREE_DATA = ' + _json.dumps(tree_json, ensure_ascii=False) + ';'
+    tree_data_js = 'const TREE_DATA = ' + json.dumps(tree_json, ensure_ascii=False) + ';'
 
     graph_css = _read('graph.css')
     graph_js = _read('graph.js')

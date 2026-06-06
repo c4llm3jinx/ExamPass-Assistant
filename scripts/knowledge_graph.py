@@ -57,19 +57,23 @@ def build_graph_prompt(text_summary: str) -> str:
 
 def parse_graph_response(response: str) -> dict:
     """Extract and parse JSON from Claude's response (may contain markdown fences)."""
-    # Try to find JSON in markdown code block
+    json_str = None
+
+    # Strategy 1: markdown code block with optional json tag
     m = re.search(r'```(?:json)?\s*\n(.*?)\n```', response, re.DOTALL)
     if m:
         json_str = m.group(1)
     else:
-        # Try to find raw JSON object
-        # NOTE: greedy regex — assumes single JSON object in response.
-        # Prompt instructs strict JSON output so multi-object responses are unlikely.
-        m = re.search(r'\{[\s\S]*"title"[\s\S]*"nodes"[\s\S]*\}', response)
+        # Strategy 2: find JSON object with title and nodes (non-greedy)
+        m = re.search(r'\{[\s\S]*?"title"[\s\S]*?"nodes"[\s\S]*?\}', response)
         if m:
-            json_str = m.group(0)
-        else:
-            json_str = response
+            # Safety: verify only one top-level { in match
+            candidate = m.group(0)
+            if candidate.count('{') == 1 or candidate.strip().count('\n{') == 0:
+                json_str = candidate
+
+    if not json_str:
+        json_str = response
 
     try:
         data = json.loads(json_str)
