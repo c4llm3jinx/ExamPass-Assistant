@@ -97,6 +97,35 @@ def save_knowledge_html(body_html, output_path, title):
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(html)
 
+# ─── Knowledge graph page ─────────────────────────────────────────
+
+def save_graph_html(tree_json: dict, output_path: str, title: str):
+    """Generate an interactive knowledge graph page.
+
+    tree_json: {"title": "...", "nodes": [...]}
+    """
+    import json as _json
+
+    tree_data_js = 'const TREE_DATA = ' + _json.dumps(tree_json, ensure_ascii=False) + ';'
+
+    graph_css = _read('graph.css')
+    graph_js = _read('graph.js')
+    graph_template = _read('graph_template.html')
+
+    html = graph_template
+    html = html.replace('__TITLE__', title)
+    html = html.replace('__MATHJAX_CONFIG__', _MATHJAX_CONFIG)
+    html = html.replace('__MATHJAX_SCRIPT__', _MATHJAX_SCRIPT)
+    html = html.replace('__CSS__', graph_css)
+    html = html.replace('__TREE_DATA__', tree_data_js)
+    html = html.replace('__JS__', graph_js)
+
+    out_dir = os.path.dirname(output_path)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write(html)
+
 
 # ─── Interactive test page ──────────────────────────────────────────
 

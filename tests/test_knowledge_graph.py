@@ -86,3 +86,49 @@ def test_validate_tree_json_duplicate_ids():
     }
     with pytest.raises(ValueError, match="重复"):
         validate_tree_json(data)
+
+
+def test_save_graph_html_creates_file(tmp_path):
+    from template_engine import save_graph_html
+
+    tree = {
+        "title": "测试课程",
+        "nodes": [
+            {"id": "n1", "label": "第1章", "summary": "概述", "children": [
+                {"id": "n2", "label": "知识点1", "summary": "细节", "children": []}
+            ]}
+        ]
+    }
+    output = tmp_path / "知识图谱.html"
+    save_graph_html(tree, str(output), "测试课程")
+
+    assert output.exists()
+    content = output.read_text(encoding='utf-8')
+    assert "测试课程" in content
+    assert "TREE_DATA" in content
+    assert "n1" in content
+    assert "n2" in content
+    assert "graph-canvas" in content
+
+
+def test_save_graph_html_creates_parent_dir(tmp_path):
+    from template_engine import save_graph_html
+
+    tree = {"title": "t", "nodes": []}
+    output = tmp_path / "subdir" / "graph.html"
+    save_graph_html(tree, str(output), "t")
+    assert output.exists()
+
+
+def test_save_graph_html_no_nested_script_tags(tmp_path):
+    """Verify TREE_DATA is NOT wrapped in double script tags."""
+    from template_engine import save_graph_html
+
+    tree = {"title": "t", "nodes": [{"id": "n1", "label": "x", "summary": "y", "children": []}]}
+    output = tmp_path / "graph.html"
+    save_graph_html(tree, str(output), "t")
+    content = output.read_text(encoding='utf-8')
+    # Should NOT have nested script tags
+    assert '<script><script>' not in content
+    # Should have exactly one opening script tag around TREE_DATA
+    assert content.count('<script>\nconst TREE_DATA') == 1
